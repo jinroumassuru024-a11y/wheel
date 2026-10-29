@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ホイール診断 管理</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: アプリ風。上に固定のアプリバー、中央に1カラムのカード、下に固定のボタンバー。単一のライトテーマ */
+:root{
+  color-scheme:light;
+  --bg:#f3f4f6; --surface:#ffffff; --fg:#111827; --muted:#6b7280; --line:#e5e7eb; --soft:#f9fafb;
+  --primary:#111827; --onprimary:#ffffff; --accent:#2f4bd8;
+  --no:#f3b4b0; --yes:#9fd3b4; --gauge:#16a34a; --gaugelow:#ef4444;
+  --wheel:#2f4bd8; --wheelfill:rgba(47,75,216,.14);
+  --shadow:0 1px 2px rgba(17,24,39,.04),0 8px 24px rgba(17,24,39,.06);
+  --font:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+#quiz{--pg:#16a34a}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(120px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,.cname{font-weight:700;text-wrap:balance;margin:0;line-height:1.35;letter-spacing:.01em}
+h2{font-size:20px}
+p{margin:0}
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:12px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.appbar .in{max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700}
+.brand svg{width:26px;height:26px}
+.tabs{display:flex;gap:4px;background:var(--bg);padding:3px;border-radius:999px}
+.tabs button{font:inherit;font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.hero{display:flex;flex-direction:column;gap:14px;align-items:center;padding-block:12px 4px}
+.hero svg{width:170px;max-width:55%}
+.hero .q1{font-size:22px;font-weight:700;text-align:center}
+.marq{width:100%;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marq .track{display:flex;gap:8px;width:max-content;animation:marq 40s linear infinite}
+.marq span{font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;white-space:nowrap}
+@keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0 0;padding:0;list-style:none}
+.steps li{display:flex}
+.steps li::before{content:"";flex:1;height:5px;border-radius:3px;background:var(--line);transition:background .3s}
+.steps li:nth-child(1){--c:#16a34a}.steps li:nth-child(2){--c:#e11d48}.steps li:nth-child(3){--c:#d97706}.steps li:nth-child(4){--c:#64748b}.steps li:nth-child(5){--c:#2f4bd8}
+.steps li.done::before,.steps li.now::before{background:var(--c)}
+.prog{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.prog .left:empty{display:none}
+.prog .left{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;background:var(--surface);padding:2px 10px;border-radius:999px;border:1px solid var(--line)}
+.panel{background:var(--surface);border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;gap:22px;box-shadow:var(--shadow)}
+.sub{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--muted)}
+.q{display:flex;flex-direction:column;gap:12px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:0;padding-bottom:0}
+.q p{font-weight:700;font-size:16px}
+.scale{display:flex;justify-content:space-between;align-items:center;gap:4px;padding:0 2px}
+.scale button{flex:0 0 auto;border-radius:50%;border:2px solid var(--line);background:var(--surface);cursor:pointer;padding:0;transition:transform .15s,background .15s,border-color .15s}
+.scale button:nth-child(1),.scale button:nth-child(5){width:46px;height:46px}
+.scale button:nth-child(2),.scale button:nth-child(4){width:38px;height:38px}
+.scale button:nth-child(3){width:30px;height:30px}
+.scale button:nth-child(-n+2){border-color:var(--no)}.scale button:nth-child(n+4){border-color:var(--yes)}
+.scale button:active{transform:scale(.9)}
+.scale button[aria-pressed=true]{background:var(--pg);border-color:var(--pg);transform:scale(1.06)}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.q.miss{outline:2px solid var(--gaugelow);outline-offset:8px;border-radius:10px}
+.choice{display:flex;flex-wrap:wrap;gap:8px}
+.choice button{font:inherit;font-size:14px;font-weight:700;padding:10px 16px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);cursor:pointer}
+.choice button[aria-pressed=true]{background:var(--pg);color:#fff;border-color:var(--pg)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label,.field .lab{font-weight:700;font-size:14px}
+input[type=date],input[type=text],textarea{font:inherit;font-size:17px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--soft);color:var(--fg);max-width:100%;width:100%}
+textarea{font-size:13px;min-height:90px;resize:vertical}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.nav .in{max-width:600px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.nav .btn.main{flex:1}
+.btn{font:inherit;font-weight:700;font-size:16px;padding:14px 22px;border-radius:14px;border:0;background:var(--primary);color:var(--onprimary);cursor:pointer;transition:transform .1s,opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--bg);color:var(--fg)}
+.btn.small{font-size:14px;padding:10px 16px;border-radius:12px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.link{font:inherit;font-size:13px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:4px;align-self:center}
+.cross{display:inline-grid;place-items:center;width:1.1em;height:1.1em;color:#16a34a;font-weight:900}
+.card{border-radius:24px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.chead{position:relative;overflow:hidden;padding:14px 20px 22px;display:flex;flex-direction:column;gap:6px}
+.chead .tag{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.8}
+.cname{font-size:clamp(24px,6.6vw,32px);position:relative;z-index:1}
+.toy{position:relative;height:120px;margin-inline:-8px;touch-action:none}
+.toy span{position:absolute;left:0;top:0;width:48px;height:48px;display:grid;place-items:center;font-size:26px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 4px 12px rgba(0,0,0,.15);cursor:grab;user-select:none;-webkit-user-select:none;will-change:transform}
+.cbody{padding:22px 20px;display:flex;flex-direction:column;gap:20px}
+.aru{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.aru li{display:flex;gap:10px;font-weight:500}
+.aru li::before{content:"";flex:0 0 6px;height:6px;margin-top:.75em;border-radius:50%;background:var(--muted)}
+.strong{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.strong b{display:block;font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:460px){.items{grid-template-columns:1fr}}
+.side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.side h3,.lbl{margin:0;font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.item{display:flex;gap:12px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
+.item .ic{font-size:26px;line-height:1;width:32px;text-align:center}
+.item .t{display:flex;flex-direction:column;line-height:1.4;min-width:0;flex:1;gap:5px}
+.item .t small{color:var(--muted);font-size:12px}
+.gauge{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.gauge i{display:block;height:100%;background:var(--gauge)}
+.gauge.low i{background:var(--gaugelow)}
+.note{font-size:13px;color:var(--muted)}
+.copybox{white-space:pre-wrap;word-break:break-all;font-size:14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0;font-family:var(--font)}
+.send{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:10px}
+summary{cursor:pointer}
+.admin{border:1.5px dashed var(--line);box-shadow:none}
+.wheel{width:100%;max-width:340px;align-self:center}
+.wheel text{fill:var(--fg);font-size:12px;font-weight:700;font-family:var(--font)}
+.wheel .grid{fill:none;stroke:var(--line)}
+.wheel .poly{fill:var(--wheelfill);stroke:var(--wheel);stroke-width:2;stroke-linejoin:round}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.meta dt{color:var(--muted)}.meta dd{margin:0}
+.rows{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.rows button{width:100%;text-align:left;font:inherit;display:flex;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--fg);cursor:pointer}
+.rows .row{display:flex;gap:6px}
+.rows .row>button:first-child{flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:2px}
+.rows .row>button:first-child span{font-weight:700}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.rows .pbtn{display:flex;align-items:center;flex:0 0 auto;width:auto;font:inherit;font-size:13px;font-weight:700;padding:0 14px;border-radius:12px;border:0;background:var(--primary);color:var(--onprimary);cursor:pointer}
+.pin{-webkit-text-security:disc;font-size:28px;letter-spacing:.5em;text-align:center;font-variant-numeric:tabular-nums}
+.rows small{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.err{color:var(--gaugelow);font-size:14px}
+@media (prefers-reduced-motion:no-preference){.panel,.card{animation:pop .35s cubic-bezier(.2,.8,.2,1)}@keyframes pop{from{opacity:.6;transform:translateY(8px)}to{opacity:1;transform:none}}}
+@media (prefers-reduced-motion:reduce){.marq{overflow-x:auto}.marq .track{animation:none}}
+</style>
+<style>body{margin:0}:root{padding-top:env(safe-area-inset-top,0px)}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="appbar"><div class="in">
+    <h1 class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><polygon points="16,3 25,8 29,17 24,26 15,29 6,25 3,15 8,6" fill="none" stroke="#e5e7eb" stroke-width="2"/><polygon points="16,7 23,11 25,17 20,23 15,25 9,21 8,15 11,9" fill="rgba(47,75,216,.18)" stroke="#2f4bd8" stroke-width="2" stroke-linejoin="round"/></svg>ホイール診断<small style="font-size:12px;color:var(--muted);font-weight:700;margin-left:6px">管理</small></h1>
+    <div class="tabs" id="tabs">
+      <button type="button" id="tab-quiz" aria-pressed="false">診断</button>
+      <button type="button" id="tab-admin" aria-pressed="true">管理</button>
+    </div>
+  </div></header>
+
+  <div id="quiz" style="display:flex;flex-direction:column;gap:22px">
+    <section class="hero" id="hero"></section>
+    <ol class="steps" id="steps" aria-label="進み具合"></ol>
+    <div class="prog"><h2 id="stitle"></h2><span class="left" id="left"></span></div>
+    <section class="panel" id="page"></section>
+    <div class="nav" id="nav"></div>
+  </div>
+
+  <div id="admin" hidden style="display:flex;flex-direction:column;gap:22px"></div>
+</div>
+
+<script>
+const CHARS={
+ "甲":{el:"木",yy:"陽",color:"#1f6b43",text:"#ffffff",name:"曲がらない学級委員長",
+  aru:["一度決めたら曲げない。道を間違えてても曲げない","正論で場を凍らせて、本人だけ気づいてない","「みんなでやろう」と言いつつ、結局全部ひとりでやってる","褒められるとぐんぐん伸びる"],
+  strong:"みんなが迷った時、最後に頼られるのはこの人"},
+ "乙":{el:"木",yy:"陰",color:"#8cc63f",text:"#1d2220",name:"八方美人のメロンソーダ",
+  aru:["誰とでも仲良し。でも「親友誰?」と聞かれると詰まる","「なんでもいいよ」と言いつつ、却下はしっかりする","本音は信頼した人にだけ、しかも小出し"],
+  strong:"ゆるく見えて、実は一番しぶとく生き残る"},
+ "丙":{el:"火",yy:"陽",color:"#e0262f",text:"#ffffff",name:"声がデカい戦隊レッド",
+  aru:["全員に話しかけたのに、名前は覚えてない","声がデカい。ヒソヒソ話ができない","始めた趣味の数がすごい。続いた数は少ない"],
+  strong:"いるだけで場が明るくなる"},
+ "丁":{el:"火",yy:"陰",color:"#ee6a8a",text:"#1d2220",name:"急に早口になるガチ勢",
+  aru:["好きな話になると急に早口","興味ない話の時、目が死んでる","好きなものを否定されると、笑顔のまま一生根に持つ"],
+  strong:"好きを語らせたら、聞いてる人までハマらせる"},
+ "戊":{el:"土",yy:"陽",color:"#e8a317",text:"#1d2220",name:"いつもの味のカレーライス",
+  aru:["新メニューは頑なに頼まない","動き出すまでが遅い。動いたら止まらない","怒らない人と思われてるけど、怒ったら一番怖い"],
+  strong:"誰の相談でも、どっしり受け止める"},
+ "己":{el:"土",yy:"陰",color:"#f4d35e",text:"#1d2220",name:"世話焼きオムライス",
+  aru:["人の世話で、自分のことは後回し","実はちょっと見返りを待ってる","「大丈夫?」が口ぐせ。言われる側になると困る"],
+  strong:"人のちょっとした変化に、誰より先に気づく"},
+ "庚":{el:"金",yy:"陽",color:"#8a9099",text:"#ffffff",name:"白黒つけたい審判",
+  aru:["「で、結局白なの?黒なの?」グレーが許せない","とりあえずやってみて、だいたい何か壊してる"],
+  strong:"困ってる人がいたら、迷う前に体が動いてる"},
+ "辛":{el:"金",yy:"陰",color:"#ffffff",text:"#1d2220",name:"汚れNGの白スニーカー",
+  aru:["雨の日は絶対に白スニーカーを履かない","傷つきやすいのにプライドは高い","センスのないものを見ると、無言で顔に出る"],
+  strong:"本物を見抜く目は確か"},
+ "壬":{el:"水",yy:"陽",color:"#1d3a8a",text:"#ffffff",name:"予定を立てない大海賊",
+  aru:["旅行はノリで決める","待ち合わせ時間は「だいたい」","話のスケールがデカい。「いつか島買う」"],
+  strong:"初対面でも、すぐ仲間にしてしまう"},
+ "癸":{el:"水",yy:"陰",color:"#7fd0ee",text:"#1d2220",name:"既読前に3回読み直す水色クラゲ",
+  aru:["送る前にLINEを3回読み直す","考えすぎて返信が遅い"],
+  strong:"ふわふわして見えて、実は誰より空気を読んでいる"}
+};
+// 並び順 = 同点時の優先順(健康→人間関係→経済)。健康のアイコンは仮
+const CROSS='<span class="cross">✚</span>';
+const ITEMS=[
+ {k:"body",g:"健康",label:"肉体",ic:CROSS,good:"体力ゲージが満タン",bad:"体力ゲージが残りわずか",
+  qs:["よく眠れて、疲れが残っていない","体を動かす習慣がある","食事をちゃんととれている","体の調子がいいと感じる","家や職場は過ごしやすい"]},
+ {k:"mind",g:"健康",label:"精神",ic:"🔋",badic:"🪫",good:"心の電池が満タン",bad:"心の電池が残りわずか",
+  qs:["気持ちに余白がある","自分なりに充電できている","この先に楽しみなことがある"]},
+ {k:"social",g:"健康",label:"社会",ic:"👍",good:"いいねがいっぱい",bad:"いいねが少なめ",
+  qs:["誰かの役に立てている実感がある","自分のしていることに意味を感じる"]},
+ {k:"family",g:"人間関係",label:"家族",ic:"🏠",good:"家の明かりが満タン",bad:"家の明かりが少なめ",
+  qs:["家族に支えられていると感じる","家族といる時、心がそこにある","家族といると安心できる"]},
+ {k:"partner",g:"人間関係",label:"パートナー",ic:"❤️",badic:"🤍",good:"ハートが満タン",bad:"ハートがからっぽ",
+  qs:["パートナーに支えられていると感じる","パートナーといる時、心がそこにある","パートナーといると安心できる"],branch:true},
+ {k:"friend",g:"人間関係",label:"友人",ic:"🤝",good:"握手がっちり",bad:"握手がほどけかけ",
+  qs:["最近よく会う友人がいる","友人といると安心できる"]},
+ {k:"work",g:"経済",label:"仕事",ic:"🚩",good:"旗が高くはためく",bad:"旗がしおれてる",
+  qs:["仕事に目的や、進んでいる実感がある","自分の強みを活かせている","一緒に働く人に満足している"]},
+ {k:"money",g:"経済",label:"お金",ic:"💰",good:"金貨袋がパンパン",bad:"金貨袋がぺたんこ",
+  qs:["努力に見合った報酬がある","貯金と借金のバランスは大丈夫","安定した収入がある"]},
+ {k:"growth",g:"経済",label:"成長",ic:"🗺️",good:"地図が広がってる",bad:"地図が白紙",
+  qs:["読書や学習の習慣がある","自分を良くする取り組みをしている"]}
+];
+// 画像生成プロンプト用(管理者だけが使う)
+const LOOK={
+ "甲":{look:"深緑の腕章をつけた学級委員長。メガネをかけて、クリップボードを抱え、まっすぐ前を見ている。少し頑固そうな表情",bg:"深緑"},
+ "乙":{look:"黄緑のメロンソーダをモチーフにした人型キャラ。頭にさくらんぼ、まわりにシュワシュワの泡。誰にでも見せる完璧な笑顔",bg:"黄緑"},
+ "丙":{look:"真っ赤なスーツを着たオリジナルのヒーロー。メガホンを持って大声で叫んでいる。元気いっぱいで声がデカそう",bg:"赤"},
+ "丁":{look:"ピンクがかった赤のペンライトを握りしめたオタク。好きなものの話をして早口になっている。目が燃えている",bg:"ピンクがかった赤"},
+ "戊":{look:"山吹色のエプロンをつけたカレー屋の店主。どっしりした体格で、おおらかな笑顔。いつものカレーの皿を持っている",bg:"山吹色"},
+ "己":{look:"たまご色のオムライスをモチーフにした世話焼きキャラ。エプロン姿でケチャップのボトルを持ち、心配そうに首をかしげている",bg:"たまご色"},
+ "庚":{look:"シルバーグレーと黒の審判服を着た審判。ホイッスルをくわえ、白と黒の旗を勢いよく振っている。勢い余って何かを壊している",bg:"シルバーグレー"},
+ "辛":{look:"真っ白なスニーカーを履いた、全身白コーデのおしゃれな人。つんとした表情で、スニーカーが汚れないように気にしている",bg:"白"},
+ "壬":{look:"紺色のコートと大きな帽子の海賊。望遠鏡を持って、自由で豪快な笑顔。スケールの大きいことを言っていそう",bg:"紺"},
+ "癸":{look:"水色のクラゲのキャラ。ふわふわ漂いながら、スマホの画面をじっと見つめて返信を考えている",bg:"水色"}
+};
+const PROMPT_ITEM={
+ body:["背筋がピンと伸びて、胸を張っている","猫背で、肩がだらんと下がっている"],
+ mind:["目がキラキラ輝いている","目がうつろで、ぼーっと遠くを見ている"],
+ social:["広い地面にしっかり足をつけて立っている","足が地面についていなくて、ふわふわ宙に浮いている"],
+ family:["背景に家があって、窓の明かりがあたたかく灯っている","背景に家があるが、窓の明かりが消えている"],
+ partner:["胸元にハートが満タンで光っている","空っぽのハートのフチだけが胸元に浮いている"],
+ friend:["まわりに握手のマークが明るく光っている","ほどけかけた握手のマークが寂しそうに浮いている"],
+ work:["背中に旗が高くはためいている","しおれた旗を引きずっている"],
+ money:["パンパンにふくらんだ金貨袋を持っている","ぺたんこの金貨袋を逆さにしている"],
+ growth:["手元に大きく広がった地図を持っている","真っ白な地図を見て首をかしげている"]
+};
+function promptOf(stem,scores,sx){
+  const c=CHARS[stem],l=LOOK[stem],res=judge(scores);
+  const L=["次のキャラクターのイラストを1枚作ってください。","","キャラクター",c.name,l.look,"性格 "+c.aru.slice(0,2).join("。")];
+  if(sx==="m"||sx==="f")L.push(`性別 ${SEX[sx]}のキャラクターとして描く`);
+  L.push("");
+  if(res.flat){L.push("状態","全体的にバランスがよく、自然体");}
+  else{
+    L.push("今の状態(絵の中で表現してください)");
+    res.good.forEach(a=>L.push(`${PROMPT_ITEM[a.it.k][0]}(${a.it.label}が満たされている)`));
+    res.bad.forEach(a=>L.push(`${PROMPT_ITEM[a.it.k][1]}(${a.it.label}が足りていない)`));
+  }
+  L.push("","雰囲気","ポップでゆるかわいい、ちょっと笑える感じ",`背景は${l.bg}を基調にしたシンプルなもの`,"文字は入れない","実在のアニメやゲームのキャラクターには似せない");
+  return L.join("\n");
+}
+var WHEEL_ORDER=["family","partner","friend","growth","money","work","body","mind","social"];
+var WHEEL_COL={"人間関係":["#e0a28c","#fbf1ed"],"経済":["#b3ade6","#f4f3fc"],"健康":["#95c4b0","#eef6f2"]};
+function to10(v){return v==null?null:Math.round((v-1)*9/4+1);}
+const PAGES=["健康","人間関係","経済","生年月日","結果"];
+const SCALE=["思わない","あまり","どちらとも","やや","そう思う"];
+const PLABEL={yes:"いる",trying:"いない(作ろうとしている)",none:"いない(今は必要ない)"};
+const ans={};let partnerHas=null;let page=0;let bd="";let nick="";let sex="";
+const SEX={m:"男性",f:"女性",x:"答えない"};
+let isOwner=false;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function stemOf(iso){
+  const [y,m,d]=iso.split("-").map(Number);
+  const days=Math.round((Date.UTC(y,m-1,d)-Date.UTC(1900,0,1))/864e5); // 1900-01-01 = 甲戌
+  return "甲乙丙丁戊己庚辛壬癸"[((days%10)+10)%10];
+}
+function keysOf(g){
+  const ks=[];
+  ITEMS.filter(it=>it.g===g).forEach(it=>{
+    if(it.branch){ks.push("pb");if(partnerHas!=="yes")return;}
+    it.qs.forEach((_,i)=>ks.push(it.k+"-"+i));
+  });
+  return ks;
+}
+const done=k=>k==="pb"?!!partnerHas:!!ans[k];
+const totalLeft=()=>PAGES.slice(0,3).reduce((n,g)=>n+keysOf(g).filter(k=>!done(k)).length,0);
+const scaleHTML=key=>`<div class="scale" role="group">${SCALE.map((s,i)=>`<button type="button" data-key="${key}" data-v="${i+1}" aria-pressed="${ans[key]===i+1}" aria-label="${s}" title="${s}" id="b-${key}-${i+1}"></button>`).join("")}</div><div class="ends"><span>思わない</span><span>そう思う</span></div>`;
+
+// 回答 → 項目ごとの平均(パートナー: 作ろうとしている=1、必要ない=null)
+function scoresFromAnswers(){
+  const s={};
+  ITEMS.forEach(it=>{
+    if(it.branch&&partnerHas==="none"){s[it.k]=null;return;}
+    if(it.branch&&partnerHas==="trying"){s[it.k]=1;return;}
+    const vs=it.qs.map((_,i)=>ans[it.k+"-"+i]);
+    s[it.k]=Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*1000)/1000;
+  });
+  return s;
+}
+function judge(scores){
+  const avgs=ITEMS.filter(it=>scores[it.k]!=null).map(it=>({it,v:scores[it.k]}));
+  const max=Math.max(...avgs.map(a=>a.v)),min=Math.min(...avgs.map(a=>a.v));
+  if(max===min)return{good:[],bad:[],flat:true};
+  return{good:avgs.filter(a=>a.v===max).slice(0,2),bad:avgs.filter(a=>a.v===min).slice(0,2),flat:false};
+}
+function resultCard(stem,scores){
+  const c=CHARS[stem],res=judge(scores);
+  const pct=v=>Math.max(8,Math.round((v-1)/4*100));
+  const itemHTML=(a,good)=>`<div class="item"><span class="ic" aria-hidden="true">${good?a.it.ic:(a.it.badic||a.it.ic)}</span>
+    <span class="t"><b>${good?a.it.good:a.it.bad}</b><span class="gauge${good?"":" low"}"><i style="width:${pct(a.v)}%"></i></span><small>${a.it.g} / ${a.it.label}</small></span></div>`;
+  const items=res.flat?`<p class="note">全部同じ点数だったので、アイテムはなし。逆にレア。</p>`
+    :`<div class="items"><div class="side"><h3>今満たされているもの</h3>${res.good.map(a=>itemHTML(a,true)).join("")}</div>
+      <div class="side"><h3>今足りていないもの</h3>${res.bad.map(a=>itemHTML(a,false)).join("")}</div></div>`;
+  const L=[c.name,"",...c.aru,"",`強み ${c.strong}`,""];
+  if(res.flat)L.push("アイテム なし","全部同じ点数。逆にレア");
+  else L.push("今満たされているもの",...res.good.map(a=>`${a.it.label} ${a.it.good}`),"","今足りていないもの",...res.bad.map(a=>`${a.it.label} ${a.it.bad}`));
+  const html=`<div class="card">
+    <div class="chead" style="background:${c.color};color:${c.text};${stem==="辛"?"border-bottom:1px solid var(--line)":""}">
+      <span class="tag">あなたのキャラ</span><p class="cname">${c.name}</p></div>
+    <div class="cbody">
+      <ul class="aru">${c.aru.map(a=>`<li>${a}</li>`).join("")}</ul>
+      <div class="strong"><b>強み</b>${c.strong}</div>
+      ${items}
+    </div></div>`;
+  return{html,text:L.join("\n")};
+}
+
+// 送信コード(回答者 → 管理者)。人が読んでもホイールにならない形
+function encodeCode(rec){return "WHEEL1:"+btoa(unescape(encodeURIComponent(JSON.stringify(rec))));}
+function decodeCode(str){
+  const m=String(str).match(/(?:WHEEL1|JKN1):([A-Za-z0-9+/=]+)/);
+  if(!m)throw new Error("コードが見つかりません。「WHEEL1:」から始まる文字をそのまま貼り付けてください。");
+  let rec;try{rec=JSON.parse(decodeURIComponent(escape(atob(m[1]))));}catch(_){throw new Error("コードが途中で切れているようです。全部コピーされているか確認してください。");}
+  if(!rec||!/^\d{4}-\d{2}-\d{2}$/.test(rec.b)||!rec.s||typeof rec.s!=="object")throw new Error("コードの中身が足りません。もう一度送ってもらってください。");
+  const s={};ITEMS.forEach(it=>{const v=rec.s[it.k];s[it.k]=v==null?null:Math.min(5,Math.max(1,Number(v)||1));});
+  return{n:String(rec.n||"").slice(0,20),b:rec.b,p:PLABEL[rec.p]?rec.p:null,x:SEX[rec.x]?rec.x:null,s,t:typeof rec.t==="string"?rec.t:null};
+}
+async function copyText(btn,text,box){
+  try{await navigator.clipboard.writeText(text);btn.textContent="コピーしました";}
+  catch(_){const r=document.createRange();r.selectNodeContents(box);const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent="選択したのでコピーしてください";}
+}
+
+
+/* 結果カードのアイテムを指ではじいて遊べる(壁に当たると振動、対応端末のみ) */
+function startToy(host,icons){
+  if(!host||!icons.length)return;
+  const W=()=>host.clientWidth,H=()=>host.clientHeight,S=48;
+  const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const bs=icons.map((ic,i)=>{const el=document.createElement("span");el.innerHTML=ic;host.append(el);
+    return{el,x:W()-S-12-i*(S+8),y:12+(i%2)*20,vx:(Math.random()-.5)*4,vy:0,drag:false,px:0,py:0};});
+  const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}};
+  const place=b=>b.el.style.transform=`translate(${b.x}px,${b.y}px)`;
+  bs.forEach(b=>{place(b);
+    b.el.addEventListener("pointerdown",e=>{b.drag=true;b.el.setPointerCapture(e.pointerId);b.px=e.clientX;b.py=e.clientY;b.vx=b.vy=0;b.el.style.cursor="grabbing";});
+    b.el.addEventListener("pointermove",e=>{if(!b.drag)return;const dx=e.clientX-b.px,dy=e.clientY-b.py;b.x+=dx;b.y+=dy;b.vx=dx;b.vy=dy;b.px=e.clientX;b.py=e.clientY;place(b);});
+    const up=()=>{b.drag=false;b.el.style.cursor="grab";};b.el.addEventListener("pointerup",up);b.el.addEventListener("pointercancel",up);});
+  if(still)return;
+  const step=()=>{
+    if(!host.isConnected)return;
+    if(!document.hidden){
+      bs.forEach(b=>{if(b.drag)return;b.vy+=.35;b.vx*=.995;b.x+=b.vx;b.y+=b.vy;let hit=0;
+        if(b.x<0){b.x=0;hit=Math.abs(b.vx);b.vx=-b.vx*.7}
+        if(b.x>W()-S){b.x=W()-S;hit=Math.abs(b.vx);b.vx=-b.vx*.7}
+        if(b.y<0){b.y=0;hit=Math.abs(b.vy);b.vy=-b.vy*.7}
+        if(b.y>H()-S){b.y=H()-S;hit=Math.max(hit,Math.abs(b.vy));b.vy=-b.vy*.6;b.vx*=.96}
+        if(hit>4)buzz();place(b);});
+      for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){const a=bs[i],c=bs[j],dx=c.x-a.x,dy=c.y-a.y,d=Math.hypot(dx,dy)||1;
+        if(d<S){const nx=dx/d,ny=dy/d,o=(S-d)/2;a.x-=nx*o;a.y-=ny*o;c.x+=nx*o;c.y+=ny*o;
+          const rv=(c.vx-a.vx)*nx+(c.vy-a.vy)*ny;if(rv<0){a.vx+=rv*nx;a.vy+=rv*ny;c.vx-=rv*nx;c.vy-=rv*ny;if(-rv>4)buzz();}}}
+    }
+    requestAnimationFrame(step);};
+  requestAnimationFrame(step);
+}
+/* ---------- 診断 ---------- */
+function render(){
+  const g=PAGES[page];
+  document.getElementById("steps").innerHTML=PAGES.map((p,i)=>`<li class="${i<page?"done":i===page?"now":""}"></li>`).join("");
+  const hero=document.getElementById("hero");hero.hidden=page!==0;
+  if(page===0&&!hero.innerHTML){
+    const chips=Object.values(CHARS).map(c=>`<span style="background:${c.color};color:${c.text}">${c.name}</span>`).join("");
+    hero.innerHTML=`${wheelSVG({body:4,mind:3,social:4.5,family:2.5,partner:4,friend:5,work:2,money:3.5,growth:4},"deco")}<p class="q1">あなたはどのキャラ?</p><div class="marq" aria-hidden="true"><div class="track">${chips}${chips}</div></div>`;}
+  document.getElementById("quiz").style.setProperty("--pg",["#16a34a","#e11d48","#d97706","#64748b","#2f4bd8"][page]);
+  document.getElementById("stitle").textContent=page<4?`${page+1}/5  ${g}`:"結果";
+  const left=totalLeft();
+  document.getElementById("left").textContent=page<3?(left?`あと ${left} 問`:"質問はすべて回答済み"):page===3?"あと少し":"";
+  const pg=document.getElementById("page"),nav=document.getElementById("nav");
+  let html="";
+  if(page<3){
+    ITEMS.filter(it=>it.g===g).forEach(it=>{
+      html+=`<div class="sub"><span aria-hidden="true">${it.ic}</span>${it.label}</div>`;
+      if(it.branch){
+        html+=`<div class="q"><p>パートナーと呼べる人がいる</p><div class="choice" role="group">
+          ${Object.entries(PLABEL).map(([v,t])=>`<button type="button" data-pb="${v}" aria-pressed="${partnerHas===v}" id="pb-${v}">${t}</button>`).join("")}</div></div>`;
+        if(partnerHas!=="yes")return;
+      }
+      it.qs.forEach((q,i)=>html+=`<div class="q" data-q="${it.k}-${i}"><p>${q}</p>${scaleHTML(it.k+"-"+i)}</div>`);
+    });
+    pg.innerHTML=html;pg.hidden=false;
+  }else if(page===3){
+    pg.innerHTML=`<p>おつかれさまでした。最後に少しだけ教えてください。</p>
+      <p class="note">入力した内容と回答は、この診断をすすめてくれた人に届きます。</p>
+      <div class="field"><label for="nick">ニックネーム</label><input type="text" id="nick" maxlength="20" autocomplete="nickname" value="${esc(nick)}"></div>
+      <div class="field"><span class="lab" id="sexlab">性別</span><div class="choice" role="group" aria-labelledby="sexlab">${Object.entries(SEX).map(([v,t])=>`<button type="button" data-sex="${v}" aria-pressed="${sex===v}" id="sx-${v}">${t}</button>`).join("")}</div></div>
+      <div class="field"><label for="bd">生年月日</label><input type="date" id="bd" min="1900-01-01" max="2026-12-31" value="${bd}"></div>`;
+    pg.hidden=false;
+    const upd=()=>{nick=document.getElementById("nick").value.trim();bd=document.getElementById("bd").value;document.getElementById("next").disabled=!(nick&&bd&&sex);};
+    pg.oninput=upd;
+  }else{
+    pg.oninput=null;
+    const scores=scoresFromAnswers(),stem=stemOf(bd),r=resultCard(stem,scores);
+    const rec={n:nick,b:bd,p:partnerHas,x:sex,s:scores,t:new Date().toISOString()};
+    pg.hidden=true;
+    html=`${r.html}<section class="panel"><p class="lbl">あなたのホイール</p>${wheelSVG(scores,"user")}<p class="note">へこんでいるところが、今ちょっと足りていないところ。出っぱっているところが、今満たされているところです。</p></section>
+      <section class="panel">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <p class="lbl">シェア用</p>
+          <pre class="copybox" id="ctext">${esc(r.text)}</pre>
+          <button class="btn ghost small" id="copy" type="button">結果をコピー</button>
+        </div>
+        <p class="note" id="sendmsg"></p>
+      </section>`;
+    nav.innerHTML=`<div class="in"><button class="btn ghost main" type="button" id="restart">最初からやり直す</button></div>`;
+    let host=document.getElementById("resultHost");
+    if(!host){host=document.createElement("div");host.id="resultHost";host.style.cssText="display:flex;flex-direction:column;gap:18px";pg.after(host);}
+    host.innerHTML=html;host.hidden=false;
+    {const res=judge(scores),ch=host.querySelector(".chead"),t=document.createElement("div");t.className="toy";ch.prepend(t);
+     startToy(t,res.flat?[]:[...res.good.map(a=>a.it.ic),...res.bad.map(a=>a.it.badic||a.it.ic)]);}
+    document.getElementById("copy").onclick=e=>copyText(e.target,r.text,document.getElementById("ctext"));
+    sendOnce(rec);
+    return;
+  }
+  const host=document.getElementById("resultHost");if(host)host.hidden=true;
+  const pageDone=page<3?keysOf(g).every(done):!!(nick&&bd&&sex);
+  nav.innerHTML=`<div class="in">`+(page>0?`<button class="btn ghost" type="button" id="back">戻る</button>`:"")+
+    `<button class="btn main" type="button" id="next" ${page===3&&!pageDone?"disabled":""}>${page<3?"次へ":"結果を見る"}</button>`+
+    (page===0&&isOwner?`<button class="link" type="button" id="sample">サンプル</button>`:"")+`</div>`;
+}
+document.getElementById("page").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const y=window.scrollY;
+  if(b.dataset.key)ans[b.dataset.key]=+b.dataset.v;
+  if(b.dataset.pb)partnerHas=b.dataset.pb;
+  if(b.dataset.sex)sex=b.dataset.sex;
+  render();window.scrollTo(0,y);
+  if(b.dataset.key){const ks=keysOf(PAGES[page]),i=ks.indexOf(b.dataset.key);
+    const nx=ks.slice(i+1).find(k=>!done(k)&&k!=="pb");const el=nx&&document.querySelector(`[data-q="${nx}"]`);
+    if(el)setTimeout(()=>el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"}),150);}
+});
+document.getElementById("nav").addEventListener("click",e=>{
+  const id=e.target.id;
+  if(id==="back"){page--;render();window.scrollTo(0,0);}
+  if(id==="next"){
+    if(page<3){const miss=keysOf(PAGES[page]).find(k=>!done(k));
+      if(miss){const el=miss==="pb"?document.getElementById("pb-yes").closest(".q"):document.querySelector(`[data-q="${miss}"]`);
+        document.querySelectorAll(".q.miss").forEach(x=>x.classList.remove("miss"));
+        if(el){el.classList.add("miss");el.scrollIntoView({behavior:"smooth",block:"center"});}
+        document.getElementById("left").textContent=`まだ答えていない質問があります`;return;}}
+    page++;render();window.scrollTo(0,0);}
+  if(id==="restart"){sent=false;isSample=false;Object.keys(ans).forEach(k=>delete ans[k]);partnerHas=null;bd="";nick="";sex="";page=0;render();window.scrollTo(0,0);}
+  if(id==="sample"){
+    isSample=true;bd="1998-07-14";nick="サンプル";partnerHas="yes";sex="m";
+    const s={body:4,mind:3,social:4,family:5,partner:2,friend:5,work:3,money:2,growth:4};
+    ITEMS.forEach(it=>it.qs.forEach((_,i)=>ans[it.k+"-"+i]=s[it.k]));
+    page=4;render();window.scrollTo(0,0);
+  }
+});
+render();
+
+/* ---------- 管理(オーナーだけ) ---------- */
+// 鶏頭図(ポーラーエリア)型のホイール。上から時計回りに 人間関係 → 経済 → 健康
+// レーダー型のホイール。上から時計回りに 家族 → パートナー → 友人 → 成長 → お金 → 仕事 → 肉体 → 精神 → 社会
+// mode: "deco"=飾り(文字なし) / "user"=項目名だけ / "admin"=項目名と点数
+function wheelSVG(scores,mode){
+  const n=WHEEL_ORDER.length,cx=180,cy=170,R=118;
+  const pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/n,r=R*v/5;return[cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+  let g="";
+  for(let lv=1;lv<=5;lv++)g+=`<polygon class="grid" points="${WHEEL_ORDER.map((_,i)=>pt(i,lv).join(",")).join(" ")}"/>`;
+  WHEEL_ORDER.forEach((_,i)=>{const[x,y]=pt(i,5);g+=`<line class="grid" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"/>`;});
+  const poly=WHEEL_ORDER.map((k,i)=>pt(i,scores[k]==null?0:scores[k]).join(",")).join(" ");
+  if(mode==="deco")return `<svg class="wheel" viewBox="56 46 248 248" aria-hidden="true">${g}<polygon class="poly" points="${poly}"/></svg>`;
+  const labels=WHEEL_ORDER.map((k,i)=>{const it=ITEMS.find(x=>x.k===k),[x,y]=pt(i,6.1),v=scores[k];
+    const t=mode==="admin"?`${it.label} ${v==null?"なし":to10(v)}`:it.label;
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle">${t}</text>`;}).join("");
+  return `<svg class="wheel" viewBox="0 0 360 340" role="img" aria-label="9項目のホイール">${g}<polygon class="poly" points="${poly}"/>${labels}</svg>`;
+}
+function recordView(rec){
+  const stem=stemOf(rec.b),c=CHARS[stem];
+  return `<section class="panel">
+    <dl class="meta"><dt>ニックネーム</dt><dd>${esc(rec.n||"(なし)")}</dd><dt>生年月日</dt><dd>${esc(rec.b)}</dd>
+      <dt>キャラ</dt><dd>${stem} ${c.name}</dd><dt>性別</dt><dd>${esc(SEX[rec.x]||"-")}</dd><dt>パートナー</dt><dd>${esc(PLABEL[rec.p]||"-")}</dd>
+      <dt>回答日</dt><dd>${rec.t?esc(new Date(rec.t).toLocaleDateString("ja-JP")):"-"}</dd></dl>
+    ${wheelSVG(rec.s,"admin")}
+  </section>
+  <section class="panel admin">
+    <h2>イラスト用プロンプト</h2>
+    <p class="note">コピーしてChatGPTなどに貼ると、この人の今の状態のキャラが描けます。</p>
+    <pre class="copybox" id="ptext">${esc(promptOf(stem,rec.s,rec.x))}</pre>
+    <div class="acts"><button class="btn small" type="button" id="copyprompt">プロンプトをコピー</button>
+    ${rec.__id?`<button class="btn ghost small" type="button" id="gift" aria-pressed="${!!rec.gifted}">${rec.gifted?"プレゼント済み(戻す)":"プレゼント済みにする"}</button>`:""}</div>
+  </section>${resultCard(stem,rec.s).html}`;
+}
+function bindRecord(rec){
+  const cp=document.getElementById("copyprompt");
+  if(cp)cp.onclick=e=>copyText(e.target,promptOf(stemOf(rec.b),rec.s,rec.x),document.getElementById("ptext"));
+  const gb=document.getElementById("gift");
+  if(gb)gb.onclick=async()=>{gb.disabled=true;rec.gifted=!rec.gifted;
+    try{await post({action:"gift",key:adminKey,id:rec.__id,gifted:rec.gifted});
+      const row=rows.find(r=>r.id===rec.__id);if(row)row.gifted=rec.gifted;renderRows();
+      gb.textContent=rec.gifted?"プレゼント済み(戻す)":"プレゼント済みにする";}
+    catch(_){rec.gifted=!rec.gifted;gb.textContent="保存できませんでした。もう一度押してください";}
+    gb.disabled=false;};
+}
+function openRecord(rec){
+  const pv=document.getElementById("preview");pv.innerHTML=recordView(rec);bindRecord(rec);
+  pv.scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- 送信と読み込み(Googleスプレッドシート) ---------- */
+const API="https://script.google.com/macros/s/AKfycbznStzH8s6DdP3S5HTAYUJl9cIh_GlIgZRz8W_WEXCkI0aNHO-EHe3D2N_b_R0Zs_51qg/exec";
+let sent=false,isSample=false,adminKey="",rows=[];
+function post(obj){return fetch(API,{method:"POST",mode:"no-cors",body:JSON.stringify(obj)});}
+async function sendOnce(rec){
+  const msg=document.getElementById("sendmsg");
+  if(isSample){msg.textContent="サンプルなので送信していません。";return;}
+  if(sent){msg.textContent="結果はすすめてくれた人に届いています。";return;}
+  sent=true;
+  try{await post(rec);msg.textContent="結果はすすめてくれた人に届きました。";}
+  catch(_){sent=false;msg.innerHTML='送信できませんでした。電波のいいところで <button class="link" type="button" id="resend">もう一度送る</button>';
+    document.getElementById("resend").onclick=()=>sendOnce(rec);}
+}
+async function loadRows(){
+  const res=await fetch(API+"?key="+encodeURIComponent(adminKey));
+  const j=await res.json();
+  if(j.error)throw new Error(j.error);
+  rows=j.rows||[];
+}
+function renderRows(){
+  const rl=document.getElementById("rows");if(!rl)return;
+  rl.innerHTML=rows.length?"":`<li class="note">まだ回答はありません。</li>`;
+  rows.forEach(r=>{const li=document.createElement("li");li.className="row";
+    const b=document.createElement("button");b.type="button";
+    const s1=document.createElement("span");s1.textContent=`${r.n||"(なし)"}  ${CHARS[stemOf(r.b)].name}`;
+    const s2=document.createElement("small");s2.textContent=(r.gifted?"🎁 プレゼント済み  ":"未プレゼント  ")+new Date(r.t).toLocaleDateString("ja-JP");
+    b.append(s1,s2);b.onclick=()=>openRecord(Object.assign({},r,{__id:r.id}));
+    const pb=document.createElement("button");pb.type="button";pb.className="pbtn";pb.textContent="プロンプト";
+    pb.onclick=async()=>{const t=promptOf(stemOf(r.b),r.s,r.x);
+      try{await navigator.clipboard.writeText(t);pb.textContent="コピー済み";}catch(_){openRecord(Object.assign({},r,{__id:r.id}));}
+      setTimeout(()=>pb.textContent="プロンプト",2000);};
+    li.append(b,pb);rl.append(li);});
+}
+function renderAdmin(){
+  const el=document.getElementById("admin");
+  if(!adminKey){
+    el.innerHTML=`<section class="panel admin"><h2>管理画面</h2>
+      <div class="field"><label for="akey">パスワード(8桁の数字)</label>
+      <input type="text" id="akey" inputmode="numeric" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="wheel-pin" class="pin"></div>
+      <p class="err" id="aerr"></p></section>`;
+    const inp=document.getElementById("akey");inp.focus();
+    const tryKey=async()=>{inp.value=inp.value.normalize("NFKC").replace(/\D/g,"").slice(0,8);document.getElementById("aerr").textContent="";
+      if(inp.value.length<8)return;
+      adminKey=inp.value;inp.disabled=true;
+      try{await loadRows();try{localStorage.setItem("wheelKey",adminKey)}catch(_){}unlock();renderAdmin();}
+      catch(x){adminKey="";inp.disabled=false;inp.value="";inp.focus();document.getElementById("aerr").textContent=x&&x.message==="key"?"パスワードが違います。":"Googleとつながりませんでした。電波を確認して、もう一度入れてください。";}};
+    inp.addEventListener("input",e=>{if(!e.isComposing)tryKey();});inp.addEventListener("compositionend",tryKey);
+    return;
+  }
+  el.innerHTML=`<div id="preview" style="display:flex;flex-direction:column;gap:18px"></div>
+    <section class="panel admin">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2>届いた回答</h2>
+        <div style="display:flex;gap:8px"><button class="btn ghost small" id="reload" type="button">更新</button><button class="btn ghost small" id="lock" type="button">ロック</button></div></div>
+      <ul class="rows" id="rows"></ul>
+    </section>`;
+  renderRows();
+  document.getElementById("lock").onclick=()=>{adminKey="";isOwner=false;rows=[];try{localStorage.removeItem("wheelKey")}catch(_){}setTab(false);render();};
+  document.getElementById("reload").onclick=async e=>{e.target.disabled=true;try{await loadRows();renderRows();}catch(_){}e.target.disabled=false;};
+}
+function setTab(admin){
+  document.getElementById("tab-quiz").setAttribute("aria-pressed",String(!admin));
+  document.getElementById("tab-admin").setAttribute("aria-pressed",String(admin));
+  document.getElementById("quiz").hidden=admin;document.getElementById("admin").hidden=!admin;
+  if(admin)renderAdmin();
+}
+function unlock(){isOwner=true;}
+document.getElementById("tab-quiz").onclick=()=>{setTab(false);render();};
+document.getElementById("tab-admin").onclick=()=>setTab(true);
+try{adminKey=localStorage.getItem("wheelKey")||""}catch(_){}
+if(adminKey)loadRows().then(()=>{unlock();render();renderRows();}).catch(()=>{adminKey="";});
+setTab(true);
+</script>
+
+</body>
+</html>
