@@ -194,23 +194,23 @@ const CHARS={
 const CROSS='<span class="cross">✚</span>';
 const ITEMS=[
  {k:"body",g:"健康",label:"肉体",ic:CROSS,good:"体力ゲージが満タン",bad:"体力ゲージが残りわずか",
-  qs:["よく眠れて、疲れが残っていない","体を動かす習慣がある","食事をちゃんととれている","体の調子がいいと感じる","家や職場は過ごしやすい"]},
+  qs:["最近、よく眠れている", "最近、体を動かすことができている", "最近、食事をちゃんととれている", "全体として、今の体の状態に満足している"]},
  {k:"mind",g:"健康",label:"精神",ic:"🔋",badic:"🪫",good:"心の電池が満タン",bad:"心の電池が残りわずか",
-  qs:["気持ちに余白がある","自分なりに充電できている","この先に楽しみなことがある"]},
- {k:"social",g:"健康",label:"社会",ic:"👍",good:"いいねがいっぱい",bad:"いいねが少なめ",
-  qs:["誰かの役に立てている実感がある","自分のしていることに意味を感じる"]},
+  qs:["最近、気持ちに余白がある", "最近、自分なりに充電できている", "最近、気持ちの切り替えがうまくできている", "全体として、今の気持ちの状態に満足している"]},
+ {k:"social",g:"健康",label:"社会",note:"家族や友人以外の場で",ic:"👍",good:"いいねがいっぱい",bad:"いいねが少なめ",
+  qs:["最近、誰かの役に立てている実感がある", "職場、学校、地域、趣味など、自分の居場所だと思える場がある", "その場で、自分のことを認めてもらえていると感じる", "全体として、今の自分の居場所や役割に満足している"]},
  {k:"family",g:"人間関係",label:"家族",ic:"🏠",good:"家の明かりが満タン",bad:"家の明かりが少なめ",
-  qs:["家族に支えられていると感じる","家族といる時、心がそこにある","家族といると安心できる"]},
+  qs:["家族に支えられていると感じる", "家族といる時、気をつかいすぎずにいられる", "最近、家族とちゃんと話せている", "全体として、今の家族との関係に満足している"]},
  {k:"partner",g:"人間関係",label:"パートナー",ic:"❤️",badic:"🤍",good:"ハートが満タン",bad:"ハートがからっぽ",
-  qs:["パートナーに支えられていると感じる","パートナーといる時、心がそこにある","パートナーといると安心できる"],branch:true},
+  qs:["パートナーに支えられていると感じる", "本音や弱いところを、パートナーに見せられる", "最近、二人で過ごす時間を楽しめている", "全体として、今のパートナーとの関係に満足している"],branch:true},
  {k:"friend",g:"人間関係",label:"友人",ic:"🤝",good:"握手がっちり",bad:"握手がほどけかけ",
-  qs:["最近よく会う友人がいる","友人といると安心できる"]},
- {k:"work",g:"経済",label:"仕事",ic:"🚩",good:"旗が高くはためく",bad:"旗がしおれてる",
-  qs:["仕事に目的や、進んでいる実感がある","自分の強みを活かせている","一緒に働く人に満足している"]},
+  qs:["最近、友人と会ったり話したりできている", "本音を話せる友人がいる", "一緒にいて楽しいと思える友人がいる", "全体として、今の友人関係に満足している"]},
+ {k:"work",g:"経済",label:"仕事",note:"学業、家事、活動も含みます",ic:"🚩",good:"旗が高くはためく",bad:"旗がしおれてる",
+  qs:["最近、仕事に進んでいる実感がある", "自分の強みを、仕事で活かせている", "仕事で関わる人と、気持ちよくやりとりできている", "全体として、今の仕事に満足している"]},
  {k:"money",g:"経済",label:"お金",ic:"💰",good:"金貨袋がパンパン",bad:"金貨袋がぺたんこ",
-  qs:["努力に見合った報酬がある","貯金と借金のバランスは大丈夫","安定した収入がある"]},
+  qs:["収入と支出のバランスがとれている", "借金やローンがない、または返済に困っていない", "少しずつでも貯金ができている", "全体として、今のお金の状況に満足している"]},
  {k:"growth",g:"経済",label:"成長",ic:"🗺️",good:"地図が広がってる",bad:"地図が白紙",
-  qs:["読書や学習の習慣がある","自分を良くする取り組みをしている"]}
+  qs:["最近、新しいことを学んだり試したりできている", "前はできなかったことが、できるようになっている", "今、伸ばしたいことがはっきりしている", "全体として、今の自分の成長に満足している"]}
 ];
 // 画像生成プロンプト用(管理者だけが使う)
 // ルール: 1か所1指示。目と表情=精神、姿勢=肉体、足元=社会、手=キャラの持ち物、体のまわり=人間関係と経済(場所は画面基準で固定)
@@ -230,7 +230,7 @@ const LOOK={
 // 体で表す3項目(上書きする場所が決まっている)
 const BODY_ITEM={
  mind:[f=>"目がキラキラと輝いて、生き生きとした顔",f=>"目がうつろで、ぼーっとした顔"],
- body:[f=>f==="触手"?"かさがピンと張って、まっすぐ浮いている":"背すじがピンと伸びて、胸を張っている",f=>f==="触手"?"かさがしぼんで、くたっと垂れ下がっている":"猫背で、肩がだらんと下がっている"],
+ body:[f=>f==="触手"?"かさがピンと張って、まっすぐ浮いている":"背すじがピンと伸びて、胸を張っている",f=>f==="触手"?"かさが大きくしぼんで、ひと目でわかるくらい、くたっと垂れ下がっている(持ち物を持つ触手はそのまま)":"背中が大きく丸まって肩が前に落ちた、ひと目でわかる猫背(持ち物を持つ手や腕はそのまま)"],
  social:[f=>`広い地面に、${f}でしっかり立っている`,f=>`${f}が地面から少し離れて、ふわふわ宙に浮いている`]
 };
 // 体のまわりに置く6項目(場所は画面基準で固定、手は使わない)
@@ -242,6 +242,18 @@ const AROUND_ITEM={
  money:{at:"画面に向かって右下の空間",what:"金貨袋(キャラの顔の半分くらいの大きさ)",good:"パンパンにふくらんで、金色にやわらかく光っている",bad:"ぺたんこにしぼんで、口が開いている。光や輝きはなし"},
  growth:{at:"画面に向かって左下の空間",what:"広げた地図(キャラの顔の半分くらいの大きさ)",good:"道や印がたくさん描きこまれて、金色にやわらかく光っている",bad:"真っ白で何も描かれていない。光や輝きはなし"}
 };
+const PERSONAL=["上の指示はすべてそのままにして、最後に次のことをお願いします。",
+"あなたが知っている私のことから、このプロンプトに書いたこと以外で、いちばん私らしいと思うものを1つ選んでください。好きなもの、最近がんばっていること、大事にしていることなど、何でも大丈夫です。",
+"ただし、悩みや体調のことなど、私が人に見せたくなさそうな話題は避けてください。",
+"選んだものは、小さなバッジかキーホルダーとして、胸以外の体の下の方(腰のあたり、クラゲなら触手の先)につけて描いてください。大きさはキャラの顔の3分の1くらいで、ひと目で何かわかるように。光らせず、文字は入れずに絵だけで表してください。",
+"質問はせずに、そのまま描いてください。思いつくものがなければ、何も足さなくて大丈夫です。",
+"描いたあとに、何を選んだかを一言で教えてください。"].join("\n");
+function giftText(rec){
+  const c=CHARS[stemOf(rec.b)];
+  return [`ホイール診断の結果から、${rec.n||""}のキャラを描いてみた!`,`「${c.name}」やったよ`,"","(ここにひと言)","",
+    "自分のChatGPTでも描いてみてな","下の文をそのまま貼ると、もっと自分っぽい絵になるよ","","----------","",
+    promptOf(stemOf(rec.b),rec.s,rec.x),"",PERSONAL].join("\n");
+}
 function promptOf(stem,scores,sx){
   const c=CHARS[stem],l=LOOK[stem],res=judge(scores);
   const st={};if(!res.flat){res.good.forEach(a=>st[a.it.k]="good");res.bad.forEach(a=>st[a.it.k]="bad");}
@@ -295,7 +307,7 @@ function scoresFromAnswers(){
   const s={};
   ITEMS.forEach(it=>{
     if(it.branch&&partnerHas==="none"){s[it.k]=null;return;}
-    if(it.branch&&partnerHas==="trying"){s[it.k]=1;return;}
+    if(it.branch&&partnerHas==="trying"){s[it.k]=null;return;}
     const vs=it.qs.map((_,i)=>ans[it.k+"-"+i]);
     s[it.k]=Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*1000)/1000;
   });
@@ -391,7 +403,7 @@ function render(){
   let html="";
   if(page<3){
     ITEMS.filter(it=>it.g===g).forEach(it=>{
-      html+=`<div class="sub"><span aria-hidden="true">${it.ic}</span>${it.label}</div>`;
+      html+=`<div class="sub"><span aria-hidden="true">${it.ic}</span>${it.label}${it.note?`<small style="font-weight:500;margin-left:6px">(${it.note})</small>`:""}</div>`;
       if(it.branch){
         html+=`<div class="q"><p>パートナーと呼べる人がいる</p><div class="choice" role="group">
           ${Object.entries(PLABEL).map(([v,t])=>`<button type="button" data-pb="${v}" aria-pressed="${partnerHas===v}" id="pb-${v}">${t}</button>`).join("")}</div></div>`;
@@ -399,6 +411,7 @@ function render(){
       }
       it.qs.forEach((q,i)=>html+=`<div class="q" data-q="${it.k}-${i}"><p>${q}</p>${scaleHTML(it.k+"-"+i)}</div>`);
     });
+    if(page===0)html=`<p class="note">「最近」は、この1か月くらいのことで答えてください</p>`+html;
     pg.innerHTML=html;pg.hidden=false;
   }else if(page===3){
     pg.innerHTML=`<p>おつかれさまでした。最後に少しだけ教えてください。</p>
@@ -497,15 +510,17 @@ function recordView(rec){
   </section>
   <section class="panel admin">
     <h2>イラスト用プロンプト</h2>
-    <p class="note">コピーしてChatGPTなどに貼ると、この人の今の状態のキャラが描けます。</p>
+    <p class="note">「自分で描く用」は、あつさんのChatGPTで絵を作る時に。「送る用」は、ひと言の下書きと、相手が自分のAIで描けるプロンプト(その人らしさの一文つき)がまとめて入るので、ひと言だけ書き換えてLINEに貼ってください。</p>
     <pre class="copybox" id="ptext">${esc(promptOf(stem,rec.s,rec.x))}</pre>
-    <div class="acts"><button class="btn small" type="button" id="copyprompt">プロンプトをコピー</button>
+    <div class="acts"><button class="btn small" type="button" id="copyprompt">自分で描く用にコピー</button><button class="btn small" type="button" id="copygift">送る用(メッセージ付き)にコピー</button>
     ${rec.__id?`<button class="btn ghost small" type="button" id="gift" aria-pressed="${!!rec.gifted}">${rec.gifted?"プレゼント済み(戻す)":"プレゼント済みにする"}</button><button class="btn ghost small" type="button" id="del" style="color:var(--gaugelow)">この回答を削除</button><button class="btn ghost small" type="button" id="delno" hidden>やめる</button>`:""}</div>
   </section>${resultCard(stem,rec.s).html}`;
 }
 function bindRecord(rec){
   const cp=document.getElementById("copyprompt");
   if(cp)cp.onclick=e=>copyText(e.target,promptOf(stemOf(rec.b),rec.s,rec.x),document.getElementById("ptext"));
+  const cg=document.getElementById("copygift");
+  if(cg)cg.onclick=e=>copyText(e.target,giftText(rec),document.getElementById("ptext"));
   const gb=document.getElementById("gift");
   if(gb)gb.onclick=async()=>{gb.disabled=true;rec.gifted=!rec.gifted;
     try{await post({action:"gift",key:adminKey,id:rec.__id,gifted:rec.gifted});
