@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ホイール診断</title>
+<meta name="description" content="36問・5分くらいで、あなたのキャラと今の「満たされているもの」がわかる診断">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jinroumassuru024-a11y.github.io/wheel/">
+<meta property="og:title" content="ホイール診断 あなたはどのキャラ?">
+<meta property="og:description" content="36問・5分くらいで終わる、ゆるい診断。10タイプのキャラと、今のあなたのホイールがわかるよ">
+<meta property="og:image" content="https://jinroumassuru024-a11y.github.io/wheel/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <style>
@@ -189,23 +198,23 @@ const CHARS={
 const CROSS='<span class="cross">✚</span>';
 const ITEMS=[
  {k:"body",g:"健康",label:"肉体",ic:CROSS,good:"体力ゲージが満タン",bad:"体力ゲージが残りわずか",
-  qs:["よく眠れて、疲れが残っていない","体を動かす習慣がある","食事をちゃんととれている","体の調子がいいと感じる","家や職場は過ごしやすい"]},
+  qs:["最近、よく眠れている", "最近、体を動かすことができている", "最近、食事をちゃんととれている", "全体として、今の体の状態に満足している"]},
  {k:"mind",g:"健康",label:"精神",ic:"🔋",badic:"🪫",good:"心の電池が満タン",bad:"心の電池が残りわずか",
-  qs:["気持ちに余白がある","自分なりに充電できている","この先に楽しみなことがある"]},
- {k:"social",g:"健康",label:"社会",ic:"👍",good:"いいねがいっぱい",bad:"いいねが少なめ",
-  qs:["誰かの役に立てている実感がある","自分のしていることに意味を感じる"]},
+  qs:["最近、気持ちに余白がある", "最近、自分なりに充電できている", "最近、気持ちの切り替えがうまくできている", "全体として、今の気持ちの状態に満足している"]},
+ {k:"social",g:"健康",label:"社会",note:"家族や友人以外の場で",ic:"👍",good:"いいねがいっぱい",bad:"いいねが少なめ",
+  qs:["最近、誰かの役に立てている実感がある", "職場、学校、地域、趣味など、自分の居場所だと思える場がある", "その場で、自分のことを認めてもらえていると感じる", "全体として、今の自分の居場所や役割に満足している"]},
  {k:"family",g:"人間関係",label:"家族",ic:"🏠",good:"家の明かりが満タン",bad:"家の明かりが少なめ",
-  qs:["家族に支えられていると感じる","家族といる時、心がそこにある","家族といると安心できる"]},
+  qs:["家族に支えられていると感じる", "家族といる時、気をつかいすぎずにいられる", "最近、家族とちゃんと話せている", "全体として、今の家族との関係に満足している"]},
  {k:"partner",g:"人間関係",label:"パートナー",ic:"❤️",badic:"🤍",good:"ハートが満タン",bad:"ハートがからっぽ",
-  qs:["パートナーに支えられていると感じる","パートナーといる時、心がそこにある","パートナーといると安心できる"],branch:true},
+  qs:["パートナーに支えられていると感じる", "本音や弱いところを、パートナーに見せられる", "最近、二人で過ごす時間を楽しめている", "全体として、今のパートナーとの関係に満足している"],branch:true},
  {k:"friend",g:"人間関係",label:"友人",ic:"🤝",good:"握手がっちり",bad:"握手がほどけかけ",
-  qs:["最近よく会う友人がいる","友人といると安心できる"]},
- {k:"work",g:"経済",label:"仕事",ic:"🚩",good:"旗が高くはためく",bad:"旗がしおれてる",
-  qs:["仕事に目的や、進んでいる実感がある","自分の強みを活かせている","一緒に働く人に満足している"]},
+  qs:["最近、友人と会ったり話したりできている", "本音を話せる友人がいる", "一緒にいて楽しいと思える友人がいる", "全体として、今の友人関係に満足している"]},
+ {k:"work",g:"経済",label:"仕事",note:"学業、家事、活動も含みます",ic:"🚩",good:"旗が高くはためく",bad:"旗がしおれてる",
+  qs:["最近、仕事に進んでいる実感がある", "自分の強みを、仕事で活かせている", "仕事で関わる人と、気持ちよくやりとりできている", "全体として、今の仕事に満足している"]},
  {k:"money",g:"経済",label:"お金",ic:"💰",good:"金貨袋がパンパン",bad:"金貨袋がぺたんこ",
-  qs:["努力に見合った報酬がある","貯金と借金のバランスは大丈夫","安定した収入がある"]},
+  qs:["収入と支出のバランスがとれている", "借金やローンがない、または返済に困っていない", "少しずつでも貯金ができている", "全体として、今のお金の状況に満足している"]},
  {k:"growth",g:"経済",label:"成長",ic:"🗺️",good:"地図が広がってる",bad:"地図が白紙",
-  qs:["読書や学習の習慣がある","自分を良くする取り組みをしている"]}
+  qs:["最近、新しいことを学んだり試したりできている", "前はできなかったことが、できるようになっている", "今、伸ばしたいことがはっきりしている", "全体として、今の自分の成長に満足している"]}
 ];
 // 画像生成プロンプト用(管理者だけが使う)
 const LOOK={
@@ -278,7 +287,7 @@ function scoresFromAnswers(){
   const s={};
   ITEMS.forEach(it=>{
     if(it.branch&&partnerHas==="none"){s[it.k]=null;return;}
-    if(it.branch&&partnerHas==="trying"){s[it.k]=1;return;}
+    if(it.branch&&partnerHas==="trying"){s[it.k]=null;return;}
     const vs=it.qs.map((_,i)=>ans[it.k+"-"+i]);
     s[it.k]=Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*1000)/1000;
   });
@@ -365,7 +374,7 @@ function render(){
   const hero=document.getElementById("hero");hero.hidden=page!==0;
   if(page===0&&!hero.innerHTML){
     const chips=Object.values(CHARS).map(c=>`<span style="background:${c.color};color:${c.text}">${c.name}</span>`).join("");
-    hero.innerHTML=`${wheelSVG({body:4,mind:3,social:4.5,family:2.5,partner:4,friend:5,work:2,money:3.5,growth:4},"deco")}<p class="q1">あなたはどのキャラ?</p><div class="marq" aria-hidden="true"><div class="track">${chips}${chips}</div></div>`;}
+    hero.innerHTML=`${wheelSVG({body:4,mind:3,social:4.5,family:2.5,partner:4,friend:5,work:2,money:3.5,growth:4},"deco")}<p class="q1">あなたはどのキャラ?</p><p class="note" style="margin-top:-6px">全36問・5分くらいで終わります</p><div class="marq" aria-hidden="true"><div class="track">${chips}${chips}</div></div>`;}
   document.getElementById("quiz").style.setProperty("--pg",["#16a34a","#e11d48","#d97706","#64748b","#2f4bd8"][page]);
   document.getElementById("stitle").textContent=page<4?`${page+1}/5  ${g}`:"結果";
   const left=totalLeft();
@@ -374,7 +383,7 @@ function render(){
   let html="";
   if(page<3){
     ITEMS.filter(it=>it.g===g).forEach(it=>{
-      html+=`<div class="sub"><span aria-hidden="true">${it.ic}</span>${it.label}</div>`;
+      html+=`<div class="sub"><span aria-hidden="true">${it.ic}</span>${it.label}${it.note?`<small style="font-weight:500;margin-left:6px">(${it.note})</small>`:""}</div>`;
       if(it.branch){
         html+=`<div class="q"><p>パートナーと呼べる人がいる</p><div class="choice" role="group">
           ${Object.entries(PLABEL).map(([v,t])=>`<button type="button" data-pb="${v}" aria-pressed="${partnerHas===v}" id="pb-${v}">${t}</button>`).join("")}</div></div>`;
@@ -382,6 +391,7 @@ function render(){
       }
       it.qs.forEach((q,i)=>html+=`<div class="q" data-q="${it.k}-${i}"><p>${q}</p>${scaleHTML(it.k+"-"+i)}</div>`);
     });
+    if(page===0)html=`<p class="note">「最近」は、この1か月くらいのことで答えてください</p>`+html;
     pg.innerHTML=html;pg.hidden=false;
   }else if(page===3){
     pg.innerHTML=`<p>おつかれさまでした。最後に少しだけ教えてください。</p>
