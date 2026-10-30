@@ -249,10 +249,7 @@ const PERSONAL=["上の指示はすべてそのままにして、最後に次の
 "質問はせずに、そのまま描いてください。思いつくものがなければ、何も足さなくて大丈夫です。",
 "描いたあとに、何を選んだかを一言で教えてください。"].join("\n");
 function giftText(rec){
-  const c=CHARS[stemOf(rec.b)];
-  return [`ホイール診断の結果から、${rec.n||""}のキャラを描いてみた!`,`「${c.name}」やったよ`,"","(ここにひと言)","",
-    "自分のChatGPTでも描いてみてな","下の文をそのまま貼ると、もっと自分っぽい絵になるよ","","----------","",
-    promptOf(stemOf(rec.b),rec.s,rec.x),"",PERSONAL].join("\n");
+  return promptOf(stemOf(rec.b),rec.s,rec.x)+"\n\n"+PERSONAL;
 }
 function promptOf(stem,scores,sx){
   const c=CHARS[stem],l=LOOK[stem],res=judge(scores);
@@ -510,9 +507,9 @@ function recordView(rec){
   </section>
   <section class="panel admin">
     <h2>イラスト用プロンプト</h2>
-    <p class="note">「自分で描く用」は、あつさんのChatGPTで絵を作る時に。「送る用」は、ひと言の下書きと、相手が自分のAIで描けるプロンプト(その人らしさの一文つき)がまとめて入るので、ひと言だけ書き換えてLINEに貼ってください。</p>
+    <p class="note">「自分で描く用」は、あつさんのChatGPTで絵を作る時に。「送る用」は、相手が自分のAIに貼るプロンプト(その人らしさの一文つき)です。メッセージは自分で書いて、その下に貼ってください。</p>
     <pre class="copybox" id="ptext">${esc(promptOf(stem,rec.s,rec.x))}</pre>
-    <div class="acts"><button class="btn small" type="button" id="copyprompt">自分で描く用にコピー</button><button class="btn small" type="button" id="copygift">送る用(メッセージ付き)にコピー</button>
+    <div class="acts"><button class="btn small" type="button" id="copyprompt">自分で描く用にコピー</button><button class="btn small" type="button" id="copygift">送る用にコピー</button>
     ${rec.__id?`<button class="btn ghost small" type="button" id="gift" aria-pressed="${!!rec.gifted}">${rec.gifted?"プレゼント済み(戻す)":"プレゼント済みにする"}</button><button class="btn ghost small" type="button" id="del" style="color:var(--gaugelow)">この回答を削除</button><button class="btn ghost small" type="button" id="delno" hidden>やめる</button>`:""}</div>
   </section>${resultCard(stem,rec.s).html}`;
 }
