@@ -213,41 +213,53 @@ const ITEMS=[
   qs:["読書や学習の習慣がある","自分を良くする取り組みをしている"]}
 ];
 // 画像生成プロンプト用(管理者だけが使う)
+// ルール: 1か所1指示。目と表情=精神、姿勢=肉体、足元=社会、手=キャラの持ち物、体のまわり=人間関係と経済(場所は画面基準で固定)
+// 満たされている物だけ光る、足りていない物は光らせない
 const LOOK={
- "甲":{look:"深緑の腕章をつけた学級委員長。メガネをかけて、クリップボードを抱え、まっすぐ前を見ている。少し頑固そうな表情",bg:"深緑"},
- "乙":{look:"黄緑のメロンソーダをモチーフにした人型キャラ。頭にさくらんぼ、まわりにシュワシュワの泡。誰にでも見せる完璧な笑顔",bg:"黄緑"},
- "丙":{look:"真っ赤なスーツを着たオリジナルのヒーロー。メガホンを持って大声で叫んでいる。元気いっぱいで声がデカそう",bg:"赤"},
- "丁":{look:"ピンクがかった赤のペンライトを握りしめたオタク。好きなものの話をして早口になっている。目が燃えている",bg:"ピンクがかった赤"},
- "戊":{look:"山吹色のエプロンをつけたカレー屋の店主。どっしりした体格で、おおらかな笑顔。いつものカレーの皿を持っている",bg:"山吹色"},
- "己":{look:"たまご色のオムライスをモチーフにした世話焼きキャラ。エプロン姿でケチャップのボトルを持ち、心配そうに首をかしげている",bg:"たまご色"},
- "庚":{look:"シルバーグレーと黒の審判服を着た審判。ホイッスルをくわえ、白と黒の旗を勢いよく振っている。勢い余って何かを壊している",bg:"シルバーグレー"},
- "辛":{look:"真っ白なスニーカーを履いた、全身白コーデのおしゃれな人。つんとした表情で、スニーカーが汚れないように気にしている",bg:"白"},
- "壬":{look:"紺色のコートと大きな帽子の海賊。望遠鏡を持って、自由で豪快な笑顔。スケールの大きいことを言っていそう",bg:"紺"},
- "癸":{look:"水色のクラゲのキャラ。ふわふわ漂いながら、スマホの画面をじっと見つめて返信を考えている",bg:"水色"}
+ "甲":{body:"HUMAN",wear:"白いシャツに深緑のネクタイ、腕に深緑の腕章、細いメガネ",hands:"左腕にクリップボードを抱え、右手の人さし指をまっすぐ前に向けている",pose:"背すじを伸ばして、まっすぐ立っている",feet:"足",prop:"",face:"口をきゅっと結んだ、まじめな顔で正面を見ている",bg:"ごく淡いグリーン",dots:"小さな白い星と、小さな深緑の丸"},
+ "乙":{body:"HUMAN",wear:"黄緑のパーカー、頭にさくらんぼの髪飾り",hands:"右手にストローのささったメロンソーダのグラス、左手で手を振っている",pose:"少し首をかしげて、軽やかに立っている",feet:"足",prop:"足元に小さな泡がいくつか浮いている",face:"誰にでも向ける、にこにこの笑顔で正面を見ている",bg:"ごく淡い黄緑",dots:"小さな白い星と、小さな黄緑の泡"},
+ "丙":{body:"HUMAN",wear:"真っ赤なオリジナルのヒーロースーツと、赤いマフラー",hands:"右手にメガホン、左手はガッツポーズ",pose:"足を大きく開いて、元気いっぱいに立っている",feet:"足",prop:"",face:"口を大きく開けて叫んでいる、元気な顔",bg:"ごく淡い赤",dots:"小さな白い星と、小さな赤い音符"},
+ "丁":{body:"HUMAN",wear:"ピンクがかった赤のはっぴ",hands:"両手にピンクがかった赤のペンライトを握りしめている",pose:"前のめりで、夢中で語っている",feet:"足",prop:"",face:"口を早口っぽく開けて、熱く語っている顔",bg:"ごく淡いピンク",dots:"小さな白い星と、小さなハートマーク"},
+ "戊":{body:"HUMAN",wear:"山吹色のエプロンとバンダナ、カレー屋の店主の格好、どっしりした体型",hands:"両手で湯気の立つカレーライスのお皿を持っている",pose:"どっしりと構えて立っている",feet:"足",prop:"",face:"おおらかな笑顔で正面を見ている",bg:"ごく淡い山吹色",dots:"小さな白い星と、小さな湯気のマーク"},
+ "己":{body:"HUMAN",wear:"たまご色のエプロン、頭にオムライスの形の帽子",hands:"右手にケチャップのボトル、左手に絆創膏の箱",pose:"少し身を乗り出して立っている",feet:"足",prop:"",face:"心配そうに首をかしげた、やさしい顔",bg:"ごく淡いクリーム色",dots:"小さな白い星と、小さな赤いケチャップのしずく"},
+ "庚":{body:"HUMAN",wear:"白と黒の縦縞の審判服に、黒い短パンと黒い靴下。口にシルバーのホイッスルをくわえている",hands:"右手に白い旗、左手に黒い旗を持ち、両腕を高く振り上げている",pose:"足を開いて、勢いよく立っている",feet:"足",prop:"足元に、旗で倒したオレンジのコーンが転がっている",face:"眉がきりっと上がった、真剣な顔で正面を見ている",bg:"ごく淡いシルバーグレー",dots:"小さな白い星と、小さな黒い三角"},
+ "辛":{body:"HUMAN",wear:"全身白のおしゃれなコーデに、真っ白なスニーカー",hands:"右手に閉じた傘を持ち、左手は腰に当てている",pose:"すっと背すじを伸ばして、モデルのように立っている",feet:"足",prop:"足元の小さな水たまりを、スニーカーで避けている",face:"つんと澄ました顔で正面を見ている",bg:"ごく淡いグレー(白い服が目立つように)",dots:"小さな白い星と、小さな宝石のきらめき"},
+ "壬":{body:"HUMAN",wear:"紺色のロングコートと、大きな海賊帽",hands:"右手に望遠鏡、左手を大きく広げている",pose:"胸を張って、堂々と立っている",feet:"足",prop:"",face:"豪快に笑っている顔",bg:"ごく淡いブルー",dots:"小さな白い星と、小さな波のマーク"},
+ "癸":{body:"JELLY",wear:"水色の半透明のクラゲ。かさの下に、ふわふわした触手",hands:"触手の1本でスマホを持ち、画面をじっと見つめている",pose:"ふわふわと漂っている",feet:"触手",prop:"",face:"返信を考えこんでいる顔",bg:"ごく淡い水色",dots:"小さな白い星と、小さな水のしずく"}
 };
-const PROMPT_ITEM={
- body:["背筋がピンと伸びて、胸を張っている","猫背で、肩がだらんと下がっている"],
- mind:["目がキラキラ輝いている","目がうつろで、ぼーっと遠くを見ている"],
- social:["広い地面にしっかり足をつけて立っている","足が地面についていなくて、ふわふわ宙に浮いている"],
- family:["背景に家があって、窓の明かりがあたたかく灯っている","背景に家があるが、窓の明かりが消えている"],
- partner:["胸元にハートが満タンで光っている","空っぽのハートのフチだけが胸元に浮いている"],
- friend:["まわりに握手のマークが明るく光っている","ほどけかけた握手のマークが寂しそうに浮いている"],
- work:["背中に旗が高くはためいている","しおれた旗を引きずっている"],
- money:["パンパンにふくらんだ金貨袋を持っている","ぺたんこの金貨袋を逆さにしている"],
- growth:["手元に大きく広がった地図を持っている","真っ白な地図を見て首をかしげている"]
+// 体で表す3項目(上書きする場所が決まっている)
+const BODY_ITEM={
+ mind:[f=>"目がキラキラと輝いて、生き生きとした顔",f=>"目がうつろで、ぼーっとした顔"],
+ body:[f=>f==="触手"?"かさがピンと張って、まっすぐ浮いている":"背すじがピンと伸びて、胸を張っている",f=>f==="触手"?"かさがしぼんで、くたっと垂れ下がっている":"猫背で、肩がだらんと下がっている"],
+ social:[f=>`広い地面に、${f}でしっかり立っている`,f=>`${f}が地面から少し離れて、ふわふわ宙に浮いている`]
+};
+// 体のまわりに置く6項目(場所は画面基準で固定、手は使わない)
+const AROUND_ITEM={
+ family:{at:"頭の上の空間",what:"小さな家のアイコン(キャラの顔の半分くらいの大きさ)",good:"窓に明かりがあたたかく灯り、金色にやわらかく光っている",bad:"窓の明かりが消えている。光や輝きはなし"},
+ partner:{at:"胸の前の、服から少し離れた空間",what:"ハート形のガラスのビン(キャラの顔と同じくらいの大きさ、輪郭は細い黒線)",good:"中がピンク色の光で満たされ、やわらかく光っている",bad:"中身は空っぽの透明。光や輝きはなし"},
+ friend:{at:"画面に向かって左側の肩の上",what:"握手をしているシンプルな線画アイコン(キャラの顔の半分くらいの大きさ)",good:"金色にやわらかく光っている",bad:"握手がほどけかけていて、色は灰色。光や輝きはなし"},
+ work:{at:"画面に向かって右側の肩の上",what:"小さな三角のペナント旗(キャラの顔の半分くらいの大きさ)",good:"高くはためいて、金色にやわらかく光っている",bad:"しおれて垂れ下がり、色は灰色。光や輝きはなし"},
+ money:{at:"画面に向かって右下の空間",what:"金貨袋(キャラの顔の半分くらいの大きさ)",good:"パンパンにふくらんで、金色にやわらかく光っている",bad:"ぺたんこにしぼんで、口が開いている。光や輝きはなし"},
+ growth:{at:"画面に向かって左下の空間",what:"広げた地図(キャラの顔の半分くらいの大きさ)",good:"道や印がたくさん描きこまれて、金色にやわらかく光っている",bad:"真っ白で何も描かれていない。光や輝きはなし"}
 };
 function promptOf(stem,scores,sx){
   const c=CHARS[stem],l=LOOK[stem],res=judge(scores);
-  const L=["次のキャラクターのイラストを1枚作ってください。","","キャラクター",c.name,l.look,"性格 "+c.aru.slice(0,2).join("。")];
-  if(sx==="m"||sx==="f")L.push(`性別 ${SEX[sx]}のキャラクターとして描く`);
-  L.push("");
-  if(res.flat){L.push("状態","全体的にバランスがよく、自然体");}
-  else{
-    L.push("今の状態(絵の中で表現してください)");
-    res.good.forEach(a=>L.push(`${PROMPT_ITEM[a.it.k][0]}(${a.it.label}が満たされている)`));
-    res.bad.forEach(a=>L.push(`${PROMPT_ITEM[a.it.k][1]}(${a.it.label}が足りていない)`));
+  const st={};if(!res.flat){res.good.forEach(a=>st[a.it.k]="good");res.bad.forEach(a=>st[a.it.k]="bad");}
+  const pick=(k,i)=>st[k]?BODY_ITEM[k][st[k]==="good"?0:1](l.feet):null;
+  const who=l.body==="JELLY"?"大人っぽい雰囲気をデフォルメした、2頭身くらいのちびキャラ":
+    `大人の${sx==="m"?"男性":sx==="f"?"女性":"人"}をデフォルメした、2頭身のちびキャラ`;
+  const L=["次のキャラクターのイラストを1枚作ってください。","","キャラクター",who,l.wear,l.hands];
+  L.push("姿勢は、"+(pick("body")||l.pose));
+  const feet=pick("social");if(feet)L.push(feet);
+  if(l.prop)L.push(l.prop);
+  L.push("表情は、"+(pick("mind")||l.face));
+  const around=Object.keys(AROUND_ITEM).filter(k=>st[k]);
+  if(around.length){
+    L.push("","体のまわりのアイテム(手には持たせない)");
+    around.forEach(k=>{const a=AROUND_ITEM[k];L.push(`${a.at}に、${a.what}が1つだけ浮かんでいる。${st[k]==="good"?a.good:a.bad}`);});
   }
-  L.push("","雰囲気","ポップでゆるかわいい、ちょっと笑える感じ",`背景は${l.bg}を基調にしたシンプルなもの`,"文字は入れない","実在のアニメやゲームのキャラクターには似せない");
+  L.push("","画風","太めの線、やわらかい塗り、明るい色づかい","正方形、キャラ1人の全身を画面の真ん中に大きく","光っているのは、体のまわりのアイテムのうち明記したものだけ");
+  L.push("","背景",`${l.bg}の単色(キャラの服よりかなり明るく)`,"キャラのまわりに、ステッカーのような白いフチ取りをつける",`キャラのまわりに、${l.dots}を少しだけ散らす`);
   return L.join("\n");
 }
 var WHEEL_ORDER=["family","partner","friend","growth","money","work","body","mind","social"];
@@ -488,7 +500,7 @@ function recordView(rec){
     <p class="note">コピーしてChatGPTなどに貼ると、この人の今の状態のキャラが描けます。</p>
     <pre class="copybox" id="ptext">${esc(promptOf(stem,rec.s,rec.x))}</pre>
     <div class="acts"><button class="btn small" type="button" id="copyprompt">プロンプトをコピー</button>
-    ${rec.__id?`<button class="btn ghost small" type="button" id="gift" aria-pressed="${!!rec.gifted}">${rec.gifted?"プレゼント済み(戻す)":"プレゼント済みにする"}</button>`:""}</div>
+    ${rec.__id?`<button class="btn ghost small" type="button" id="gift" aria-pressed="${!!rec.gifted}">${rec.gifted?"プレゼント済み(戻す)":"プレゼント済みにする"}</button><button class="btn ghost small" type="button" id="del" style="color:var(--gaugelow)">この回答を削除</button><button class="btn ghost small" type="button" id="delno" hidden>やめる</button>`:""}</div>
   </section>${resultCard(stem,rec.s).html}`;
 }
 function bindRecord(rec){
@@ -502,8 +514,20 @@ function bindRecord(rec){
     catch(_){rec.gifted=!rec.gifted;gb.textContent="保存できませんでした。もう一度押してください";}
     gb.disabled=false;};
 }
+function bindDelete(rec){
+  const db=document.getElementById("del"),no=document.getElementById("delno");if(!db)return;
+  let armed=false;
+  no.onclick=()=>{armed=false;no.hidden=true;db.textContent="この回答を削除";};
+  db.onclick=async()=>{
+    if(!armed){armed=true;no.hidden=false;db.textContent="本当に消す(もう一度押す)";return;}
+    db.disabled=true;no.hidden=true;db.textContent="削除しています…";
+    try{await post({action:"delete",key:adminKey,id:rec.__id});
+      rows=rows.filter(r=>r.id!==rec.__id);renderRows();
+      document.getElementById("preview").innerHTML='<p class="note">削除しました。</p>';}
+    catch(_){db.disabled=false;armed=false;db.textContent="削除できませんでした。もう一度押してください";}};
+}
 function openRecord(rec){
-  const pv=document.getElementById("preview");pv.innerHTML=recordView(rec);bindRecord(rec);
+  const pv=document.getElementById("preview");pv.innerHTML=recordView(rec);bindRecord(rec);bindDelete(rec);
   pv.scrollIntoView({behavior:"smooth"});
 }
 
@@ -529,10 +553,11 @@ async function loadRows(){
 function renderRows(){
   const rl=document.getElementById("rows");if(!rl)return;
   rl.innerHTML=rows.length?"":`<li class="note">まだ回答はありません。</li>`;
+  const cnt={};rows.forEach(r=>{const k=r.n+"|"+r.b;cnt[k]=(cnt[k]||0)+1;});
   rows.forEach(r=>{const li=document.createElement("li");li.className="row";
     const b=document.createElement("button");b.type="button";
     const s1=document.createElement("span");s1.textContent=`${r.n||"(なし)"}  ${CHARS[stemOf(r.b)].name}`;
-    const s2=document.createElement("small");s2.textContent=(r.gifted?"🎁 プレゼント済み  ":"未プレゼント  ")+new Date(r.t).toLocaleDateString("ja-JP");
+    const s2=document.createElement("small");s2.textContent=(cnt[r.n+"|"+r.b]>1?"⚠ 重複かも  ":"")+(r.gifted?"🎁 プレゼント済み  ":"未プレゼント  ")+new Date(r.t).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
     b.append(s1,s2);b.onclick=()=>openRecord(Object.assign({},r,{__id:r.id}));
     const pb=document.createElement("button");pb.type="button";pb.className="pbtn";pb.textContent="プロンプト";
     pb.onclick=async()=>{const t=promptOf(stemOf(r.b),r.s,r.x);
