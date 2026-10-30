@@ -230,7 +230,7 @@ const LOOK={
 // 体で表す3項目(上書きする場所が決まっている)
 const BODY_ITEM={
  mind:[f=>"目がキラキラと輝いて、生き生きとした顔",f=>"目がうつろで、ぼーっとした顔"],
- body:[f=>f==="触手"?"かさがピンと張って、まっすぐ浮いている":"背すじがピンと伸びて、胸を張っている",f=>f==="触手"?"かさが大きくしぼんで、ひと目でわかるくらい、くたっと垂れ下がっている(持ち物を持つ触手はそのまま)":"背中が大きく丸まって肩が前に落ちた、ひと目でわかる猫背(持ち物を持つ手や腕はそのまま)"],
+ body:[f=>f==="触手"?"かさがピンと張って、まっすぐ浮いている":"背すじがピンと伸びて、胸を張っている",f=>f==="触手"?"かさが大きくしぼんで、ひと目でわかるくらい、くたっと垂れ下がっている(持ち物を持つ触手はそのまま)":"力が抜けてぐったりした猫背。背中が丸まって肩が下に落ち、頭も少し沈んでいる。前に乗り出しているのではなく、疲れて縮こまっている感じ(持ち物を持つ手や腕はそのまま)"],
  social:[f=>`広い地面に、${f}でしっかり立っている`,f=>`${f}が地面から少し離れて、ふわふわ宙に浮いている`]
 };
 // 体のまわりに置く6項目(場所は画面基準で固定、手は使わない)
@@ -306,15 +306,17 @@ function scoresFromAnswers(){
     if(it.branch&&partnerHas==="none"){s[it.k]=null;return;}
     if(it.branch&&partnerHas==="trying"){s[it.k]=null;return;}
     const vs=it.qs.map((_,i)=>ans[it.k+"-"+i]);
-    s[it.k]=Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*1000)/1000;
+    // 平均(0.25刻み)に、4問目「全体として満足」の点をごく小さく足す(同点の時の並び順にだけ使う)
+    s[it.k]=Math.round((vs.reduce((a,b)=>a+b,0)/vs.length+(vs[vs.length-1]-3)*0.001)*1000)/1000;
   });
   return s;
 }
 function judge(scores){
   const avgs=ITEMS.filter(it=>scores[it.k]!=null).map(it=>({it,v:scores[it.k]}));
-  const max=Math.max(...avgs.map(a=>a.v)),min=Math.min(...avgs.map(a=>a.v));
+  const q=v=>Math.round(v*4)/4; // 同点かどうかは平均で判定。並び順は満足度の高い/低い方を先に
+  const max=Math.max(...avgs.map(a=>q(a.v))),min=Math.min(...avgs.map(a=>q(a.v)));
   if(max===min)return{good:[],bad:[],flat:true};
-  return{good:avgs.filter(a=>a.v===max).slice(0,2),bad:avgs.filter(a=>a.v===min).slice(0,2),flat:false};
+  return{good:avgs.filter(a=>q(a.v)===max).sort((a,b)=>b.v-a.v).slice(0,2),bad:avgs.filter(a=>q(a.v)===min).sort((a,b)=>a.v-b.v).slice(0,2),flat:false};
 }
 function resultCard(stem,scores){
   const c=CHARS[stem],res=judge(scores);
